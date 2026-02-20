@@ -1,43 +1,38 @@
 import streamlit as st
 from sentiment import analyze_sentiment
-from deepface import DeepFace
-import cv2
-import numpy as np
+from transformers import pipeline
 
-st.set_page_config(page_title="AI Interview Analyzer", layout="centered")
+st.set_page_config(page_title="AI Interview Analyzer")
 
 st.title("🎯 AI Interview Analyzer")
 st.write("Analyze your confidence using AI")
 
-# ----------------------------
-# TEXT INPUT (Speech alternative for web)
-# ----------------------------
+# -----------------------
+# TEXT SENTIMENT
+# -----------------------
 
 user_text = st.text_area("🎤 Enter your interview answer:")
 
-if st.button("Analyze Text Sentiment"):
+if st.button("Analyze Text"):
     if user_text:
         sentiment_result = analyze_sentiment(user_text)
         st.success(f"Sentiment: {sentiment_result['label']}")
         st.write(f"Confidence Score: {round(sentiment_result['score']*100)}%")
     else:
-        st.warning("Please enter some text.")
+        st.warning("Please enter text.")
 
-# ----------------------------
-# IMAGE EMOTION DETECTION
-# ----------------------------
+# -----------------------
+# FACIAL EMOTION (LIGHT VERSION)
+# -----------------------
 
-st.subheader("😊 Upload your face image")
+st.subheader("😊 Emotion from Text Tone")
 
-uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png"])
+emotion_classifier = pipeline(
+    "text-classification",
+    model="j-hartmann/emotion-english-distilroberta-base"
+)
 
-if uploaded_file is not None:
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    img = cv2.imdecode(file_bytes, 1)
-
-    st.image(img, channels="BGR")
-
-    result = DeepFace.analyze(img, actions=['emotion'])
-    emotion = result[0]['dominant_emotion']
-
-    st.success(f"Detected Emotion: {emotion}")
+if st.button("Analyze Emotion"):
+    if user_text:
+        emotion = emotion_classifier(user_text)
+        st.success(f"Detected Emotion: {emotion[0]['label']}")
